@@ -16,6 +16,9 @@
 #ifndef DSPI_H
 #define DSPI_H
 
+#define MASTER 0
+#define SLAVE 1
+
 #include <driverlib.h>
 
 /* Device specific includes */
@@ -31,12 +34,16 @@ private:
 	
 	/* Internal states */
 	eUSCI_SPI_MasterConfig MasterConfig;		//eUSCI_SPI_MasterConfig can be found in driver library, spi.h
+	eUSCI_SPI_SlaveConfig SlaveConfig;			//eUSCI_SPI_SlaveConfig  can be found in driver library, spi.h
+	uint8_t mode;
 	
 	void _initMain( void );
 	
 public:
 	DSPI();
 	DSPI(uint8_t mod);
+	void setMasterMode();
+	void setSlaveMode();
 	
 	void begin();
 	char transfer(char data);
