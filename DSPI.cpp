@@ -114,6 +114,8 @@ void DSPI::begin()		//follow Dwire
 		MasterConfig.spiMode 				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;                       // 4Wire SPI Mode with active high, macro found in spi.h	
 		
 		MAP_SPI_initMaster(this->module, &MasterConfig);	//function found in rom_map.h	
+		
+		MAP_SPI_enableModule(this->module);		//enable SPI operation, MAP_SPI_enableModule() found in driver library, rom_map.h	
 	}
 	else
 	{
@@ -134,8 +136,6 @@ void DSPI::begin()		//follow Dwire
 		MAP_Interrupt_enableInterrupt( intModule );
 		MAP_Interrupt_enableMaster( );		//function found in rom_map.h
 	}
-	
-	MAP_SPI_enableModule(this->module);		//enable SPI operation, MAP_SPI_enableModule() found in driver library, rom_map.h	
 }
 
 
