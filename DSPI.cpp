@@ -111,7 +111,7 @@ void DSPI::begin()		//follow Dwire
 		MasterConfig.msbFirst 				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
 		MasterConfig.clockPhase 			= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
 		MasterConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		MasterConfig.spiMode 				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;                       // 4Wire SPI Mode with active high, macro found in spi.h	
+		MasterConfig.spiMode 				= EUSCI_B_SPI_3PIN;                       // 3Wire SPI Mode with active high, macro found in spi.h	
 		
 		MAP_SPI_initMaster(this->module, &MasterConfig);	//function found in rom_map.h	
 		
@@ -122,7 +122,7 @@ void DSPI::begin()		//follow Dwire
 		SlaveConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
 		SlaveConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
 		SlaveConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;                       // 4Wire SPI Mode with active high, macro found in spi.h	
+		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;                       // 3Wire SPI Mode with active high, macro found in spi.h	
 		
 		MAP_SPI_initSlave(this->module, &SlaveConfig);							//function found in rom_map.h
 		
