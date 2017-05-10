@@ -142,13 +142,13 @@ void DSPI::begin()		//follow Dwire
 /**** Read and write 1 byte of data ****/
 char DSPI::transfer(char data)
 {	
-	while (!(MAP_SPI_getInterruptStatus(this->module, UCRXIFG))); //function can be found in rom_map.h, macro found in msp432p401r.h
-
-	MAP_SPI_transmitData(this->module, data);		//function found in rom_map.h
+	while (!(SPI_getInterruptStatus(this->module, UCTXIFG))); //function can be found in rom_map.h, macro found in msp432p401r.h
+	SPI_transmitData(this->module, data);		//function found in rom_map.h
 	
 	if(mode == MASTER)
 	{	
-		return MAP_SPI_receiveData(this->module);		//function found in rom_map.h
+		while (!(SPI_getInterruptStatus(this->module, UCRXIFG))); //function can be found in rom_map.h, macro found in msp432p401r.h
+		return SPI_receiveData(this->module);		//function found in rom_map.h
 	}
 	else
 	{
