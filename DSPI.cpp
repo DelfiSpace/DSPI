@@ -133,7 +133,7 @@ void DSPI::begin()		//follow Dwire
 		
 		MAP_SPI_clearInterruptFlag(this->module, status);
 		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);	//function found in rom_map.h, macro found in spi.h	
-		MAP_Interrupt_enableInterrupt( intModule );
+		MAP_Interrupt_enableInterrupt( intModule );	//intModule found in _initMain
 		MAP_Interrupt_enableMaster( );		//function found in rom_map.h
 	}
 }
@@ -160,6 +160,19 @@ char DSPI::transfer(char data)
 void DSPI::onReceive( void (*islHandle)(void) ) 
 {
     user_onReceive = islHandle;		//user_onReceive is a function declare in DSPI.h, user parse the Interrupt handler here from main sketches
+}
+
+/**
+ * Internal process handling the rx buffers, and calling the user's interrupt handles
+ */
+void DSPI::_handleReceive() 
+{
+    // No need to do anything if there is no handler registered
+    if (!user_onReceive)
+        return;
+
+	// call the user-defined receive handler
+    user_onReceive();
 }
 
 
@@ -226,19 +239,6 @@ void DSPI::_initMain( void )
 		break;		
 	}	
 	MAP_GPIO_setAsPeripheralModuleFunctionInputPin(modulePort, modulePins, GPIO_PRIMARY_MODULE_FUNCTION);	//function found in gpio.c, GPIO_PRIMARY_MODULE_FUNCTION found in gpio.h
-}
-
-/**
- * Internal process handling the rx buffers, and calling the user's interrupt handles
- */
-void DSPI::_handleReceive() 
-{
-    // No need to do anything if there is no handler registered
-    if (!user_onReceive)
-        return;
-
-	// call the user-defined receive handler
-    user_onReceive();
 }
 
 /**** ISR/IRQ Handles ****/
