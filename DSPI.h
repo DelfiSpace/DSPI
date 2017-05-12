@@ -22,7 +22,7 @@
 #include <driverlib.h>
 
 /* Device specific includes */
-#include <inc\dspi_msp432p401r.h>
+#include <inc/dspi_msp432p401r.h>
 
 void EUSCIB0_IRQHandler( void );
 void EUSCIB1_IRQHandler( void );
