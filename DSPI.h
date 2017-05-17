@@ -34,15 +34,15 @@ private:
 	uint32_t intModule;
 	
 	/* Internal states */
-	uint8_t (*user_onReceive)(uint8_t);
+	uint8_t (*user_onTransfer)(uint8_t);
 	
-	eUSCI_SPI_MasterConfig MasterConfig;		//eUSCI_SPI_MasterConfig can be found in driver library, spi.h
-	eUSCI_SPI_SlaveConfig SlaveConfig;			//eUSCI_SPI_SlaveConfig	 can be found in driver library, spi.h
+	eUSCI_SPI_MasterConfig MasterConfig;
+	eUSCI_SPI_SlaveConfig SlaveConfig;
 	uint8_t mode;
 	
 	void _initMain( void ); 
 	
-	uint8_t _handleReceive(uint8_t);
+	uint8_t _handleTransfer(uint8_t);
 	
 public:
 	DSPI();
@@ -55,7 +55,7 @@ public:
 	void begin();
 	char transfer(char data);
 	
-	void onReceive(uint8_t(*islHandle)(uint8_t)); 
+	void onTransfer(uint8_t(*islHandle)(uint8_t)); 
 
 	/* Interrupt handlers: they are declared as friends to be accessible from outside 
 	   but have access to class members */

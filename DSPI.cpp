@@ -14,10 +14,9 @@
  */
  
  #include <DSPI.h> 
- #include <Energia.h>
  
  /* A reference list of DSPI instances */
-DSPI * instances[4];		//pointer of DSPI class, to access functions under DSPI class, _handleReceive
+DSPI * instances[4];		// pointer to the instantiated	DSPI classes
 
 /**
  * The main (global) interrupt	handler
@@ -28,7 +27,7 @@ DSPI * instances[4];		//pointer of DSPI class, to access functions under DSPI cl
 		uint32_t status = MAP_SPI_getEnabledInterruptStatus(EUSCI_B## M ##_SPI_BASE); \
 		MAP_SPI_clearInterruptFlag( EUSCI_B## M ##_SPI_BASE, status); \
 		 \
-		MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleReceive( \
+		MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleTransfer( \
 					MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ) ); \
 	}
 
@@ -56,7 +55,7 @@ void EUSCIB3_IRQHandler( void )
 /**** CONSTRUCTORS Default ****/
 DSPI::DSPI() 
 {	//MSP432 launchpad used EUSCI_B0_SPI as default 
-	this->module = EUSCI_B0_SPI_BASE; //default settings, base address found in msp432p401r.h
+	this->module = EUSCI_B0_SPI_BASE;
 	this->mode = MASTER;
 	instances[0] = this;
 }
@@ -65,7 +64,7 @@ DSPI::DSPI()
 DSPI::DSPI(uint8_t mod)
 {
 	 switch (mod) 
-	{	//base address found in msp432p401r.h, only EUSCI_B was used	   
+	{	   
 		case 0:
 			this->module = EUSCI_B0_SPI_BASE;
 			instances[0] = this;
@@ -92,7 +91,7 @@ DSPI::DSPI(uint8_t mod)
 /**** DESTRUCTORS Reset the module ****/
 DSPI::~DSPI() 
 {
-	MAP_SPI_disableModule(this->module);	//MAP_SPI_disableModule() found in driver library, rom_map.h
+	MAP_SPI_disableModule(this->module);
 	
 	/* Deregister from the moduleMap */
 	switch (module) 
@@ -131,11 +130,9 @@ void DSPI::setSlaveMode()
 /**** Begin SPI as Master ****/
 void DSPI::begin()		//follow Dwire
 {	
-	uint32_t status;		//interrupt flag status
+	MAP_SPI_disableModule(this->module);	//disable SPI operation for configuration settings
 
-	MAP_SPI_disableModule(this->module);	//disable SPI operation for configuration settings, MAP_SPI_disableModule() found in driver library, rom_map.h
-
-	_initMain();	//SPI pin init
+	_initMain();	//SPI pins init
 	
 	if (mode == MASTER)
 	{
@@ -148,28 +145,26 @@ void DSPI::begin()		//follow Dwire
 		MasterConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
 		MasterConfig.spiMode				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;						 // 4Wire SPI Mode with active high, macro found in spi.h	
 		
-		MAP_SPI_initMaster(this->module, &MasterConfig);	//function found in rom_map.h	
+		MAP_SPI_initMaster(this->module, &MasterConfig);
 		
-		MAP_SPI_enableModule(this->module);		//enable SPI operation, MAP_SPI_enableModule() found in driver library, rom_map.h	
+		MAP_SPI_enableModule(this->module);		//enable SPI operation	
 	}
 	else
 	{
 		SlaveConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
 		SlaveConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
 		SlaveConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;						  // 4Wire SPI Mode with active high, macro found in spi.h	
+		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;											// 4Wire SPI Mode with active high, macro found in spi.h	
 		
-		MAP_SPI_initSlave(this->module, &SlaveConfig);							//function found in rom_map.h
+		MAP_SPI_initSlave(this->module, &SlaveConfig);
 		
-		MAP_SPI_enableModule(this->module);		//enable SPI operation, MAP_SPI_enableModule() found in driver library, rom_map.h	
+		MAP_SPI_enableModule(this->module);		//enable SPI operation
 		
 		//Interrupt initialisation
-		status = MAP_SPI_getEnabledInterruptStatus(this->module);
-		
-		MAP_SPI_clearInterruptFlag(this->module, status);
-		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);	//function found in rom_map.h, macro found in spi.h 
-		MAP_Interrupt_enableInterrupt( intModule ); //intModule found in _initMain
-		MAP_Interrupt_enableMaster( );		//function found in rom_map.h
+		MAP_SPI_clearInterruptFlag(this->module, MAP_SPI_getEnabledInterruptStatus(this->module));
+		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		MAP_Interrupt_enableInterrupt( intModule ); 
+		MAP_Interrupt_enableMaster( );
 	}
 }
 
@@ -177,7 +172,6 @@ void DSPI::begin()		//follow Dwire
 /**** Read and write 1 byte of data ****/
 char DSPI::transfer(char data)
 {	
-	//while (!(MAP_SPI_getInterruptStatus(this->module, UCTXIFG))); 
 	MAP_SPI_transmitData(this->module, data);		
 	
 	if(mode == MASTER)
@@ -192,22 +186,26 @@ char DSPI::transfer(char data)
 }
 
 /**** Slave RX Interrupt Handler ****/
-void DSPI::onReceive( uint8_t (*islHandle)(uint8_t) ) 
+void DSPI::onTransfer( uint8_t (*islHandle)(uint8_t) ) 
 {
-	user_onReceive = islHandle;		//user_onReceive is a function declare in DSPI.h, user parse the Interrupt handler here from main sketches
+	user_onTransfer = islHandle;
 }
 
 /**
- * Internal process handling the rx buffers, and calling the user's interrupt handles
+ * Internal process handling the rx/tx buffers, and calling the user's interrupt handles
  */
-uint8_t DSPI::_handleReceive(uint8_t data) 
+uint8_t DSPI::_handleTransfer(uint8_t data) 
 {
-	// No need to do anything if there is no handler registered
-	if (!user_onReceive)
-		return 0;
+	// do something only if there is a handler registered
+	if (user_onTransfer)
+	{
+		// call the user-defined data transfer handler
+		return user_onTransfer(data);
+	}
+	return 0;
 
-	// call the user-defined receive handler
-	return user_onReceive(data);
+	
+	
 }
 
 
@@ -217,16 +215,16 @@ void DSPI::_initMain( void )
 {
 	switch (module) 
 	{	
-		case EUSCI_B0_SPI_BASE:			//base address found in msp432p401r.h
+		case EUSCI_B0_SPI_BASE:
 		
-		modulePort = EUSCI_B0_PORT;		//EUSCI_#_PORT and EUSCI_#_PINS found in dspi_msp432p401r.h
+		modulePort = EUSCI_B0_PORT;
 		modulePins = EUSCI_B0_PINS;
 		
-		intModule = INT_EUSCIB0;	//macro found in interrupt.h
+		intModule = INT_EUSCIB0;
 		
 		if (mode == SLAVE)
 		{	//slave receive interrupt request handler
-			MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler);	//function found in rom_map.h
+			MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler);
 		}
 		
 		break;
@@ -240,7 +238,7 @@ void DSPI::_initMain( void )
 		
 		if (mode == SLAVE)
 		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler);	//function found in rom_map.h
+			MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler);
 		}
 		
 		break;
@@ -254,7 +252,7 @@ void DSPI::_initMain( void )
 		
 		if (mode == SLAVE)
 		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler);	//function found in rom_map.h
+			MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler);
 		}
 		
 		break;
@@ -268,10 +266,10 @@ void DSPI::_initMain( void )
 		
 		if (mode == SLAVE)
 		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler);	//function found in rom_map.h
+			MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler);
 		}
 		
 		break;		
 	}	
-	MAP_GPIO_setAsPeripheralModuleFunctionInputPin(modulePort, modulePins, GPIO_PRIMARY_MODULE_FUNCTION);	//function found in gpio.c, GPIO_PRIMARY_MODULE_FUNCTION found in gpio.h
+	MAP_GPIO_setAsPeripheralModuleFunctionInputPin(modulePort, modulePins, GPIO_PRIMARY_MODULE_FUNCTION);
 }
