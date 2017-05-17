@@ -14,6 +14,7 @@
  */
  
  #include <DSPI.h> 
+ #include <Energia.h>
  
  /* A reference list of DSPI instances */
 DSPI * instances[4];		//pointer of DSPI class, to access functions under DSPI class, _handleReceive
@@ -25,9 +26,10 @@ DSPI * instances[4];		//pointer of DSPI class, to access functions under DSPI cl
 #define IRQHANDLER(M) \
 	{ \
 		uint32_t status = MAP_SPI_getEnabledInterruptStatus(EUSCI_B## M ##_SPI_BASE); \
-		MAP_SPI_clearInterruptFlag(EUSCI_B## M ##_SPI_BASE, status); \
+		MAP_SPI_clearInterruptFlag( EUSCI_B## M ##_SPI_BASE, status); \
 		 \
-		instances[M]->_handleReceive( MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ); \
+		MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleReceive( \
+					MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ) ); \
 	}
 
 /**** ISR/IRQ Handles ****/
@@ -175,13 +177,13 @@ void DSPI::begin()		//follow Dwire
 /**** Read and write 1 byte of data ****/
 char DSPI::transfer(char data)
 {	
-	while (!(MAP_SPI_getInterruptStatus(this->module, UCTXIFG))); //function can be found in rom_map.h, macro found in msp432p401r.h
-	MAP_SPI_transmitData(this->module, data);		//function found in rom_map.h
+	//while (!(MAP_SPI_getInterruptStatus(this->module, UCTXIFG))); 
+	MAP_SPI_transmitData(this->module, data);		
 	
 	if(mode == MASTER)
 	{	
-		while (!(SPI_getInterruptStatus(this->module, UCRXIFG))); //MAP_ function gives bug, use function in spi.h, macro found in msp432p401r.h
-		return MAP_SPI_receiveData(this->module);		//function found in rom_map.h
+		while (!(SPI_getInterruptStatus(this->module, UCRXIFG)));
+		return MAP_SPI_receiveData(this->module);
 	}
 	else
 	{
@@ -190,7 +192,7 @@ char DSPI::transfer(char data)
 }
 
 /**** Slave RX Interrupt Handler ****/
-void DSPI::onReceive( void (*islHandle)(uint8_t) ) 
+void DSPI::onReceive( uint8_t (*islHandle)(uint8_t) ) 
 {
 	user_onReceive = islHandle;		//user_onReceive is a function declare in DSPI.h, user parse the Interrupt handler here from main sketches
 }
@@ -198,14 +200,14 @@ void DSPI::onReceive( void (*islHandle)(uint8_t) )
 /**
  * Internal process handling the rx buffers, and calling the user's interrupt handles
  */
-void DSPI::_handleReceive(uint8_t data) 
+uint8_t DSPI::_handleReceive(uint8_t data) 
 {
 	// No need to do anything if there is no handler registered
 	if (!user_onReceive)
-		return;
+		return 0;
 
 	// call the user-defined receive handler
-	user_onReceive(data);
+	return user_onReceive(data);
 }
 
 
