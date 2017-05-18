@@ -101,6 +101,7 @@ DSPI::DSPI(uint8_t mod)
 DSPI::~DSPI() 
 {
 	MAP_SPI_disableModule(this->module);
+	MAP_SPI_unregisterInterrupt(this->module);
 	
 	/* Deregister from the moduleMap */
 	switch (module) 
@@ -152,11 +153,9 @@ void DSPI::begin()
 		MasterConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
 		MasterConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
 		MasterConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		MasterConfig.spiMode				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;						 // 4Wire SPI Mode with active high, macro found in spi.h	
+		MasterConfig.spiMode				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;						// 4Wire SPI Mode with active high, macro found in spi.h	
 		
-		MAP_SPI_initMaster(this->module, &MasterConfig);
-		
-		MAP_SPI_enableModule(this->module);		//enable SPI operation	
+		MAP_SPI_initMaster(this->module, &MasterConfig);	
 	}
 	else
 	{
@@ -166,15 +165,10 @@ void DSPI::begin()
 		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;											// 4Wire SPI Mode with active high, macro found in spi.h	
 		
 		MAP_SPI_initSlave(this->module, &SlaveConfig);
-		
-		MAP_SPI_enableModule(this->module);		//enable SPI operation
-		
-		//Interrupt initialisation
-		MAP_SPI_clearInterruptFlag(this->module, MAP_SPI_getEnabledInterruptStatus(this->module));
-		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT | EUSCI_B_SPI_TRANSMIT_INTERRUPT);
-		MAP_Interrupt_enableInterrupt( intModule ); 
-		MAP_Interrupt_enableMaster( );
 	}
+	
+	// enable SPI operation
+	MAP_SPI_enableModule(this->module);		
 }
 
 /**** Read and write 1 byte of data ****/
@@ -199,12 +193,38 @@ uint8_t DSPI::transfer(uint8_t data)
 void DSPI::onTransmit( uint8_t (*islHandle)( void ) ) 
 {
 	user_onTransmit = islHandle;
+	if ( isHandle )
+	{
+		// enable the transmit interrupt but do not clear the flag: this is done to ensure 
+		// that the interrupt fires straight away so that the transmit buffer can be filled 
+		// the first time
+		MAP_SPI_enableInterrupt(this->module, MAP_SPI_getEnabledInterrupt(this->module) | 
+						EUSCI_B_SPI_TRANSMIT_INTERRUPT);
+	}
+	else
+	{
+		// disable transmit interrupt
+		MAP_SPI_disableInterrupt(this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT);
+	}
 }
 
 /**** RX Interrupt Handler ****/
 void DSPI::onReceive( void (*islHandle)(uint8_t) ) 
 {
 	user_onReceive = islHandle;
+	if ( isHandle )
+	{
+		// clear the receive interrupt to avoid spurious triggers the first time
+		MAP_SPI_clearInterruptFlag(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		// enable receive interrupt
+		MAP_SPI_enableInterrupt(this->module, MAP_SPI_getEnabledInterrupt(this->module) | 
+						EUSCI_B_SPI_RECEIVE_INTERRUPT);
+	}
+	else
+	{
+		// disable receive interrupt
+		MAP_SPI_disableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+	}	
 }
 
 /**** PRIVATE ****/
@@ -218,12 +238,8 @@ void DSPI::_initMain( void )
 		modulePort = EUSCI_B0_PORT;
 		modulePins = EUSCI_B0_PINS;
 		
-		intModule = INT_EUSCIB0;
-		
-		if (mode == SLAVE)
-		{	//slave receive interrupt request handler
-			MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler);
-		}
+		// transmit / receive interrupt request handler
+		MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler);
 		
 		break;
 		
@@ -232,12 +248,8 @@ void DSPI::_initMain( void )
 		modulePort = EUSCI_B1_PORT;
 		modulePins = EUSCI_B1_PINS;
 		
-		intModule = INT_EUSCIB1;
-		
-		if (mode == SLAVE)
-		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler);
-		}
+		// transmit / receive interrupt request handler
+		MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler);
 		
 		break;
 		
@@ -246,12 +258,8 @@ void DSPI::_initMain( void )
 		modulePort = EUSCI_B2_PORT;
 		modulePins = EUSCI_B2_PINS;
 		
-		intModule = INT_EUSCIB2;
-		
-		if (mode == SLAVE)
-		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler);
-		}
+		// transmit / receive interrupt request handler
+		MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler);
 		
 		break;
 		
@@ -260,12 +268,8 @@ void DSPI::_initMain( void )
 		modulePort = EUSCI_B3_PORT;
 		modulePins = EUSCI_B3_PINS;
 		
-		intModule = INT_EUSCIB3;
-		
-		if (mode == SLAVE)
-		{
-			MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler);
-		}
+		// transmit / receive interrupt request handler
+		MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler);
 		
 		break;		
 	}	

@@ -31,7 +31,6 @@ private:
 	uint32_t module;
 	uint8_t modulePort;
 	uint16_t modulePins;
-	uint32_t intModule;
 	
 	/* Internal states */
 	uint8_t (*user_onTransmit)( void );
