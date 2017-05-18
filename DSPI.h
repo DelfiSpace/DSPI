@@ -35,8 +35,6 @@ private:
 	/* Internal states */
 	uint8_t (*user_onTransmit)( void );
 	void (*user_onReceive)( uint8_t );
-	eUSCI_SPI_MasterConfig MasterConfig;
-	eUSCI_SPI_SlaveConfig SlaveConfig;
 	uint8_t mode;
 	
 	void _initMain( void ); 

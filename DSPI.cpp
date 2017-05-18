@@ -146,6 +146,8 @@ void DSPI::begin()
 	
 	if (mode == MASTER)
 	{
+		eUSCI_SPI_MasterConfig MasterConfig;
+		
 		//Default Configuration
 		MasterConfig.selectClockSource		= EUSCI_SPI_CLOCKSOURCE_SMCLK;								// SMCLK Clock Source, macro found in spi.h
 		MasterConfig.clockSourceFrequency	= MAP_CS_getSMCLK();										// MAP_CS_getSMCLK() function found in rom_map.h
@@ -159,6 +161,8 @@ void DSPI::begin()
 	}
 	else
 	{
+		eUSCI_SPI_SlaveConfig SlaveConfig;
+		
 		SlaveConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
 		SlaveConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
 		SlaveConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
@@ -168,7 +172,7 @@ void DSPI::begin()
 	}
 	
 	// enable SPI operation
-	MAP_SPI_enableModule(this->module);		
+	MAP_SPI_enableModule(this->module);
 }
 
 /**** Read and write 1 byte of data ****/
@@ -193,18 +197,17 @@ uint8_t DSPI::transfer(uint8_t data)
 void DSPI::onTransmit( uint8_t (*islHandle)( void ) ) 
 {
 	user_onTransmit = islHandle;
-	if ( isHandle )
+	if ( islHandle )
 	{
 		// enable the transmit interrupt but do not clear the flag: this is done to ensure 
 		// that the interrupt fires straight away so that the transmit buffer can be filled 
 		// the first time
-		MAP_SPI_enableInterrupt(this->module, MAP_SPI_getEnabledInterrupt(this->module) | 
-						EUSCI_B_SPI_TRANSMIT_INTERRUPT);
+		MAP_SPI_enableInterrupt( this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT );
 	}
 	else
 	{
 		// disable transmit interrupt
-		MAP_SPI_disableInterrupt(this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT);
+		MAP_SPI_disableInterrupt( this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT) ;
 	}
 }
 
@@ -212,18 +215,17 @@ void DSPI::onTransmit( uint8_t (*islHandle)( void ) )
 void DSPI::onReceive( void (*islHandle)(uint8_t) ) 
 {
 	user_onReceive = islHandle;
-	if ( isHandle )
+	if ( islHandle )
 	{
 		// clear the receive interrupt to avoid spurious triggers the first time
-		MAP_SPI_clearInterruptFlag(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		MAP_SPI_clearInterruptFlag( this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT );
 		// enable receive interrupt
-		MAP_SPI_enableInterrupt(this->module, MAP_SPI_getEnabledInterrupt(this->module) | 
-						EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		MAP_SPI_enableInterrupt( this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT );
 	}
 	else
 	{
 		// disable receive interrupt
-		MAP_SPI_disableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		MAP_SPI_disableInterrupt( this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT );
 	}	
 }
 
