@@ -47,7 +47,7 @@ private:
 	void _handleReceive(uint8_t);
 	
 	/* Interrupt handlers: they are declared as friends to be accessible from outside 
-	   but have access to class members */
+	   the class (the interrupt engine) but have access to member functions */
 	friend void EUSCIB0_IRQHandler( void );
 	friend void EUSCIB1_IRQHandler( void );
 	friend void EUSCIB2_IRQHandler( void );
