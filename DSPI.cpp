@@ -24,11 +24,20 @@ DSPI * instances[4];		// pointer to the instantiated	DSPI classes
  */
 #define IRQHANDLER(M) \
 	{ \
-		uint32_t status = MAP_SPI_getEnabledInterruptStatus(EUSCI_B## M ##_SPI_BASE); \
-		MAP_SPI_clearInterruptFlag( EUSCI_B## M ##_SPI_BASE, status); \
+		uint32_t status = MAP_SPI_getEnabledInterruptStatus( EUSCI_B## M ##_SPI_BASE ); \
+		MAP_SPI_clearInterruptFlag( EUSCI_B## M ##_SPI_BASE, status ); \
 		 \
-		MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleTransfer( \
-					MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ) ); \
+		/* Transmit interrupt flag */ \
+		if (status & UCTXIFG) \
+		{ \
+			MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleTransmit() ); \
+		} \
+		 \
+		/* Receive interrupt flag */ \
+		if (status & UCRXIFG) \
+		{ \
+			instances[M]->_handleReceive( MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ); \
+		} \
 	}
 
 /**** ISR/IRQ Handles ****/
@@ -128,7 +137,7 @@ void DSPI::setSlaveMode()
 
 
 /**** Begin SPI as Master ****/
-void DSPI::begin()		//follow Dwire
+void DSPI::begin()
 {	
 	MAP_SPI_disableModule(this->module);	//disable SPI operation for configuration settings
 
@@ -162,52 +171,41 @@ void DSPI::begin()		//follow Dwire
 		
 		//Interrupt initialisation
 		MAP_SPI_clearInterruptFlag(this->module, MAP_SPI_getEnabledInterruptStatus(this->module));
-		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT);
+		MAP_SPI_enableInterrupt(this->module, EUSCI_B_SPI_RECEIVE_INTERRUPT | EUSCI_B_SPI_TRANSMIT_INTERRUPT);
 		MAP_Interrupt_enableInterrupt( intModule ); 
 		MAP_Interrupt_enableMaster( );
 	}
 }
 
-
 /**** Read and write 1 byte of data ****/
-char DSPI::transfer(char data)
+uint8_t DSPI::transfer(uint8_t data)
 {	
-	MAP_SPI_transmitData(this->module, data);		
-	
-	if(mode == MASTER)
-	{	
-		while (!(SPI_getInterruptStatus(this->module, UCRXIFG)));
-		return MAP_SPI_receiveData(this->module);
-	}
-	else
+	// transfer can only be used WITHOUT interrupts
+	if ((user_onTransmit) || (user_onReceive))
 	{
-		return 0;	//Slave does not expect a return
+		return 0;
 	}
-}
-
-/**** Slave RX Interrupt Handler ****/
-void DSPI::onTransfer( uint8_t (*islHandle)(uint8_t) ) 
-{
-	user_onTransfer = islHandle;
-}
-
-/**
- * Internal process handling the rx/tx buffers, and calling the user's interrupt handles
- */
-uint8_t DSPI::_handleTransfer(uint8_t data) 
-{
-	// do something only if there is a handler registered
-	if (user_onTransfer)
-	{
-		// call the user-defined data transfer handler
-		return user_onTransfer(data);
-	}
-	return 0;
-
 	
+	// ensure the transmitter is ready to transmit data
+	while (!(MAP_SPI_getInterruptStatus(this->module, UCTXIFG)));
+	MAP_SPI_transmitData(this->module, data);	
 	
+	// wait for a byte to be received	
+	while (!(SPI_getInterruptStatus(this->module, UCRXIFG)));
+	return MAP_SPI_receiveData(this->module);
 }
 
+/**** TX Interrupt Handler ****/
+void DSPI::onTransmit( uint8_t (*islHandle)( void ) ) 
+{
+	user_onTransmit = islHandle;
+}
+
+/**** RX Interrupt Handler ****/
+void DSPI::onReceive( void (*islHandle)(uint8_t) ) 
+{
+	user_onReceive = islHandle;
+}
 
 /**** PRIVATE ****/
 /**** Initialise SPI Pin Configuration based on EUSCI used ****/
@@ -272,4 +270,31 @@ void DSPI::_initMain( void )
 		break;		
 	}	
 	MAP_GPIO_setAsPeripheralModuleFunctionInputPin(modulePort, modulePins, GPIO_PRIMARY_MODULE_FUNCTION);
+}
+
+/**
+ * Internal process handling the tx, and calling the user's interrupt handles
+ */
+uint8_t DSPI::_handleTransmit( void ) 
+{
+	// do something only if there is a handler registered
+	if (user_onTransmit)
+	{
+		// call the user-defined data transfer handler
+		return user_onTransmit();
+	}
+	return 0;
+}
+
+/**
+ * Internal process handling the rx, and calling the user's interrupt handles
+ */
+void DSPI::_handleReceive( uint8_t data ) 
+{
+	// do something only if there is a handler registered
+	if (user_onReceive)
+	{
+		// call the user-defined data transfer handler
+		return user_onReceive(data);
+	}
 }

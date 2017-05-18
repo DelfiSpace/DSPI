@@ -34,35 +34,38 @@ private:
 	uint32_t intModule;
 	
 	/* Internal states */
-	uint8_t (*user_onTransfer)(uint8_t);
-	
+	uint8_t (*user_onTransmit)( void );
+	void (*user_onReceive)( uint8_t );
 	eUSCI_SPI_MasterConfig MasterConfig;
 	eUSCI_SPI_SlaveConfig SlaveConfig;
 	uint8_t mode;
 	
 	void _initMain( void ); 
 	
-	uint8_t _handleTransfer(uint8_t);
+	/* stub functions to handle interrupts */
+	uint8_t _handleTransmit( void );
+	void _handleReceive(uint8_t);
 	
-public:
-	DSPI();
-	DSPI(uint8_t mod);
-	~DSPI();
-	
-	void setMasterMode();
-	void setSlaveMode();
-	
-	void begin();
-	char transfer(char data);
-	
-	void onTransfer(uint8_t(*islHandle)(uint8_t)); 
-
 	/* Interrupt handlers: they are declared as friends to be accessible from outside 
 	   but have access to class members */
 	friend void EUSCIB0_IRQHandler( void );
 	friend void EUSCIB1_IRQHandler( void );
 	friend void EUSCIB2_IRQHandler( void );
 	friend void EUSCIB3_IRQHandler( void );
+	
+public:
+	DSPI();
+	DSPI( uint8_t mod );
+	~DSPI();
+	
+	void setMasterMode();
+	void setSlaveMode();
+	
+	void begin();
+	uint8_t transfer( uint8_t data );
+	
+	void onTransmit(uint8_t(*islHandle)( void )); 
+	void onReceive(void(*islHandle)( uint8_t )); 
 
 protected:
 
