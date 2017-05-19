@@ -301,6 +301,6 @@ void DSPI::_handleReceive( uint8_t data )
 	if (user_onReceive)
 	{
 		// call the user-defined data transfer handler
-		return user_onReceive(data);
+		user_onReceive(data);
 	}
 }
