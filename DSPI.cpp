@@ -15,8 +15,8 @@
  
  #include <DSPI.h> 
  
- /* A reference list of DSPI instances */
-DSPI * instances[4];		// pointer to the instantiated	DSPI classes
+ /* A reference list of DSPI DSPI_instancess */
+DSPI * DSPI_instancess[4];		// pointer to the instantiated	DSPI classes
 
 /**
  * The main (global) interrupt	handler
@@ -30,13 +30,13 @@ DSPI * instances[4];		// pointer to the instantiated	DSPI classes
 		/* Transmit interrupt flag */ \
 		if (status & UCTXIFG) \
 		{ \
-			MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, instances[M]->_handleTransmit() ); \
+			MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, DSPI_instancess[M]->_handleTransmit() ); \
 		} \
 		 \
 		/* Receive interrupt flag */ \
 		if (status & UCRXIFG) \
 		{ \
-			instances[M]->_handleReceive( MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ); \
+			DSPI_instancess[M]->_handleReceive( MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ); \
 		} \
 	}
 
@@ -66,7 +66,7 @@ DSPI::DSPI()
 {	//MSP432 launchpad used EUSCI_B0_SPI as default 
 	this->module = EUSCI_B0_SPI_BASE;
 	this->mode = MASTER;
-	instances[0] = this;
+	DSPI_instancess[0] = this;
 }
 
 /**** CONSTRUCTORS User Defined****/
@@ -76,22 +76,22 @@ DSPI::DSPI(uint8_t mod)
 	{	   
 		case 0:
 			this->module = EUSCI_B0_SPI_BASE;
-			instances[0] = this;
+			DSPI_instancess[0] = this;
 			break;
 
 		case 1:
 			this->module = EUSCI_B1_SPI_BASE;
-			instances[1] = this;
+			DSPI_instancess[1] = this;
 			break;
 			
 		case 2:
 			this->module = EUSCI_B2_SPI_BASE;
-			instances[2] = this;
+			DSPI_instancess[2] = this;
 			break;
 			
 		case 3:
 			this->module = EUSCI_B3_SPI_BASE;
-			instances[3] = this;
+			DSPI_instancess[3] = this;
 			break;
 	}
 	this->mode = MASTER;
@@ -107,19 +107,19 @@ DSPI::~DSPI()
 	switch (module) 
 	{
 		case EUSCI_B0_SPI_BASE:
-			instances[0] = 0;
+			DSPI_instancess[0] = 0;
 			break;
 			
 		case EUSCI_B1_SPI_BASE:
-			instances[1] = 0;
+			DSPI_instancess[1] = 0;
 			break;
 			
 		case EUSCI_B2_SPI_BASE:
-			instances[2] = 0;
+			DSPI_instancess[2] = 0;
 			
 			break;
 		case EUSCI_B3_SPI_BASE:
-			instances[3] = 0;
+			DSPI_instancess[3] = 0;
 			break;
 	}
 }
