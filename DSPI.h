@@ -22,7 +22,7 @@
 #include <driverlib.h>
 
 /* Device specific includes */
-#include <inc/dspi_msp432p401r.h>
+#include <inc/msp432p401r.h>
 
 class DSPI
 {

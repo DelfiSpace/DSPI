@@ -13,7 +13,7 @@
  *
  */
  
- #include <DSPI.h> 
+ #include "DSPI.h"
  
  /* A reference list of DSPI DSPI_instancess */
 DSPI * DSPI_instancess[4];		// pointer to the instantiated	DSPI classes
