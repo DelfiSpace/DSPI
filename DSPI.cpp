@@ -65,7 +65,6 @@ void EUSCIB3_IRQHandler( void )
 DSPI::DSPI() 
 {	//MSP432 launchpad used EUSCI_B0_SPI as default 
 	this->module = EUSCI_B0_SPI_BASE;
-	this->mode = MASTER;
 	DSPI_instancess[0] = this;
 }
 
@@ -94,7 +93,6 @@ DSPI::DSPI(uint8_t mod)
 			DSPI_instancess[3] = this;
 			break;
 	}
-	this->mode = MASTER;
 }
 
 /**** DESTRUCTORS Reset the module ****/
@@ -124,55 +122,89 @@ DSPI::~DSPI()
 	}
 }
 
-/**** Set as Master User Defined****/
-void DSPI::setMasterMode() 
+void DSPI::initMaster( Mode mode, Order order, unsigned int speed )
 {
-	this->mode = MASTER;
+    MAP_SPI_disableModule(this->module);    //disable SPI operation for configuration settings
+
+    _initMain();    //SPI pins init
+
+    eUSCI_SPI_MasterConfig config;
+
+    // SPI Configuration
+    config.selectClockSource    = EUSCI_SPI_CLOCKSOURCE_SMCLK;    // SMCLK Clock Source
+    config.clockSourceFrequency = MAP_CS_getSMCLK();
+    config.desiredSpiClock      = speed;
+    config.msbFirst             = (order == MSBFirst) ? EUSCI_B_SPI_MSB_FIRST : EUSCI_B_SPI_LSB_FIRST;                                    // MSB first, macro found in spi.h
+    config.spiMode                = EUSCI_B_SPI_3PIN;
+
+    switch(mode)
+    {
+        case MODE0:
+        default:
+            config.clockPhase              = EUSCI_B_CTLW0_CKPH;
+            config.clockPolarity           = 0;
+            break;
+
+        case MODE1:
+            config.clockPhase              = 0;
+            config.clockPolarity           = 0;
+            break;
+
+        case MODE2:
+            config.clockPhase              = EUSCI_B_CTLW0_CKPH;
+            config.clockPolarity           = EUSCI_B_CTLW0_CKPL;
+            break;
+
+        case MODE3:
+            config.clockPhase              = 0;
+            config.clockPolarity           = EUSCI_B_CTLW0_CKPL;
+            break;
+    }
+    MAP_SPI_initMaster(this->module, &config);
+
+    // enable SPI operation
+    MAP_SPI_enableModule(this->module);
 }
 
-/**** Set as Slave User Defined****/
-void DSPI::setSlaveMode() 
+void DSPI::initSlave( Mode mode, Order order )
 {
-	this->mode = SLAVE;
-}
+    MAP_SPI_disableModule(this->module);    //disable SPI operation for configuration settings
 
+    _initMain();    //SPI pins init
 
-/**** Begin SPI as Master ****/
-void DSPI::begin()
-{	
-	MAP_SPI_disableModule(this->module);	//disable SPI operation for configuration settings
+    eUSCI_SPI_SlaveConfig config;
 
-	_initMain();	//SPI pins init
-	
-	if (mode == MASTER)
-	{
-		eUSCI_SPI_MasterConfig MasterConfig;
-		
-		//Default Configuration
-		MasterConfig.selectClockSource		= EUSCI_SPI_CLOCKSOURCE_SMCLK;								// SMCLK Clock Source, macro found in spi.h
-		MasterConfig.clockSourceFrequency	= MAP_CS_getSMCLK();										// MAP_CS_getSMCLK() function found in rom_map.h
-		MasterConfig.desiredSpiClock		= 1000000;													// 1MHz		
-		MasterConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
-		MasterConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
-		MasterConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		MasterConfig.spiMode				= EUSCI_B_SPI_4PIN_UCxSTE_ACTIVE_HIGH;						// 4Wire SPI Mode with active high, macro found in spi.h	
-		
-		MAP_SPI_initMaster(this->module, &MasterConfig);	
-	}
-	else
-	{
-		eUSCI_SPI_SlaveConfig SlaveConfig;
-		
-		SlaveConfig.msbFirst				= EUSCI_B_SPI_MSB_FIRST;									// MSB first, macro found in spi.h
-		SlaveConfig.clockPhase				= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;	// Phase, macro found in spi.h
-		SlaveConfig.clockPolarity			= EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW;					// low polarity, macro found in spi.h
-		SlaveConfig.spiMode					= EUSCI_B_SPI_3PIN;											// 4Wire SPI Mode with active high, macro found in spi.h	
-		
-		MAP_SPI_initSlave(this->module, &SlaveConfig);
-	}
-	
-	// enable SPI operation
-	MAP_SPI_enableModule(this->module);
+    // SPI Configuration
+    config.msbFirst = (order == MSBFirst) ? EUSCI_B_SPI_MSB_FIRST : EUSCI_B_SPI_LSB_FIRST;
+    config.spiMode  = EUSCI_B_SPI_3PIN;
+
+    switch(mode)
+    {
+        case MODE0:
+        default:
+            config.clockPhase              = 0;
+            config.clockPolarity           = 0;
+            break;
+
+        case MODE1:
+            config.clockPhase              = EUSCI_B_CTLW0_CKPH;
+            config.clockPolarity           = 0;
+            break;
+
+        case MODE2:
+            config.clockPhase              = EUSCI_B_CTLW0_CKPH;
+            config.clockPolarity           = EUSCI_B_CTLW0_CKPL;
+            break;
+
+        case MODE3:
+            config.clockPhase              = 0;
+            config.clockPolarity           = EUSCI_B_CTLW0_CKPL;
+            break;
+    }
+    MAP_SPI_initSlave(this->module, &config);
+
+    // enable SPI operation
+    MAP_SPI_enableModule(this->module);
 }
 
 /**** Read and write 1 byte of data ****/

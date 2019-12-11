@@ -35,7 +35,6 @@ private:
 	/* Internal states */
 	uint8_t (*user_onTransmit)( void );
 	void (*user_onReceive)( uint8_t );
-	uint8_t mode;
 	
 	void _initMain( void ); 
 	
@@ -51,14 +50,17 @@ private:
 	friend void EUSCIB3_IRQHandler( void );
 	
 public:
+
+	enum Mode { MODE0, MODE1, MODE2, MODE3 };
+
+	enum Order { LSBFirst, MSBFirst };
+
 	DSPI();
 	DSPI( uint8_t mod );
 	~DSPI();
 	
-	void setMasterMode();
-	void setSlaveMode();
-	
-	void begin();
+	void initMaster( Mode mode, Order order, unsigned int speed );
+	void initSlave( Mode mode, Order order );
 	uint8_t transfer( uint8_t data );
 	
 	void onTransmit(uint8_t(*islHandle)( void )); 
