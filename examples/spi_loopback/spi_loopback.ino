@@ -36,11 +36,10 @@ void setup()
   delay(300);
 
   // Initialize SPI master
-  master.begin();
+  master.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
   
   // Initialize SPI slave
-  slave.setSlaveMode(); 
-  slave.begin();
+  slave.initSlave(DSPI::MODE0, DSPI::MSBFirst);
   slave.onReceive(receiveHandler);
   slave.onTransmit(transmitHandler);
 
