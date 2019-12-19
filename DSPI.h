@@ -44,10 +44,10 @@ private:
 	
 	/* Interrupt handlers: they are declared as friends to be accessible from outside 
 	   the class (the interrupt engine) but have access to member functions */
-	friend void EUSCIB0_IRQHandler( void );
-	friend void EUSCIB1_IRQHandler( void );
-	friend void EUSCIB2_IRQHandler( void );
-	friend void EUSCIB3_IRQHandler( void );
+	friend void EUSCIB0_IRQHandler_SPI( void );
+	friend void EUSCIB1_IRQHandler_SPI( void );
+	friend void EUSCIB2_IRQHandler_SPI( void );
+	friend void EUSCIB3_IRQHandler_SPI( void );
 	
 public:
 

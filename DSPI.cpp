@@ -41,22 +41,22 @@ DSPI * DSPI_instancess[4];		// pointer to the instantiated	DSPI classes
 	}
 
 /**** ISR/IRQ Handles ****/
-void EUSCIB0_IRQHandler( void ) 
+void EUSCIB0_IRQHandler_SPI( void )
 {
 	IRQHANDLER(0);
 }
 
-void EUSCIB1_IRQHandler( void ) 
+void EUSCIB1_IRQHandler_SPI( void )
 {
 	IRQHANDLER(1);
 }
 
-void EUSCIB2_IRQHandler( void ) 
+void EUSCIB2_IRQHandler_SPI( void )
 {
 	IRQHANDLER(2);
 }
 
-void EUSCIB3_IRQHandler( void ) 
+void EUSCIB3_IRQHandler_SPI( void )
 {
 	IRQHANDLER(3);
 }
@@ -273,7 +273,7 @@ void DSPI::_initMain( void )
 		modulePins = EUSCI_B0_PINS;
 		
 		// transmit / receive interrupt request handler
-		MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler);
+		MAP_SPI_registerInterrupt(this->module, EUSCIB0_IRQHandler_SPI);
 		
 		break;
 		
@@ -283,7 +283,7 @@ void DSPI::_initMain( void )
 		modulePins = EUSCI_B1_PINS;
 		
 		// transmit / receive interrupt request handler
-		MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler);
+		MAP_SPI_registerInterrupt(this->module, EUSCIB1_IRQHandler_SPI);
 		
 		break;
 		
@@ -293,7 +293,7 @@ void DSPI::_initMain( void )
 		modulePins = EUSCI_B2_PINS;
 		
 		// transmit / receive interrupt request handler
-		MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler);
+		MAP_SPI_registerInterrupt(this->module, EUSCIB2_IRQHandler_SPI);
 		
 		break;
 		
@@ -303,7 +303,7 @@ void DSPI::_initMain( void )
 		modulePins = EUSCI_B3_PINS;
 		
 		// transmit / receive interrupt request handler
-		MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler);
+		MAP_SPI_registerInterrupt(this->module, EUSCIB3_IRQHandler_SPI);
 		
 		break;		
 	}	
