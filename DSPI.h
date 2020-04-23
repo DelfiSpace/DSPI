@@ -16,13 +16,13 @@
 #ifndef DSPI_H
 #define DSPI_H
 
-#define MASTER 0
-#define SLAVE 1
-
 #include <driverlib.h>
-
-/* Device specific includes */
-#include <inc/msp432p401r.h>
+// Device specific includes
+#if defined (__MSP432P401R__)
+    #include "inc/msp432p401r.h"
+#elif defined (__MSP432P4111__)
+    #include "inc/msp432p4111.h"
+#endif
 
 class DSPI
 {

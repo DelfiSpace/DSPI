@@ -1,13 +1,13 @@
 /*
- * dspi_msp432p401r.h
+ * dspi_msp432p4111.h
  *
- *  Created on: 1 May 2017
- *  Author: Chia Jiun Wei
- * <J.W.Chia@tudelft.nl>
+ *  Created on: 23 April 2020
+ *  Author: Stefano Speretta
+ * <s.speretta@tudelft.nl>
  */
 
-#ifndef INCLUDE_DSPI_MSP432P401R_H_
-#define INCLUDE_DSPI_MSP432P401R_H_
+#ifndef INCLUDE_DSPI_MSP432P4111_H_
+#define INCLUDE_DSPI_MSP432P4111_H_
 
 #include <driverlib.h>
 
@@ -35,4 +35,4 @@
 #define EUSCI_B3_CLK  GPIO_PIN1
 #define EUSCI_B3_PINS (EUSCI_B3_MISO | EUSCI_B3_MOSI | EUSCI_B3_CLK)
 
-#endif /* INCLUDE_DSPI_MSP432P401R_H_ */
+#endif /* INCLUDE_DSPI_MSP432P4111_H_ */

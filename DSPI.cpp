@@ -28,13 +28,13 @@ DSPI * DSPI_instancess[4];		// pointer to the instantiated	DSPI classes
 		MAP_SPI_clearInterruptFlag( EUSCI_B## M ##_SPI_BASE, status ); \
 		 \
 		/* Transmit interrupt flag */ \
-		if (status & UCTXIFG) \
+		if (status & EUSCI_B_IFG_TXIFG) \
 		{ \
 			MAP_SPI_transmitData( EUSCI_B## M ##_SPI_BASE, DSPI_instancess[M]->_handleTransmit() ); \
 		} \
 		 \
 		/* Receive interrupt flag */ \
-		if (status & UCRXIFG) \
+		if (status & EUSCI_B_IFG_RXIFG) \
 		{ \
 			DSPI_instancess[M]->_handleReceive( MAP_SPI_receiveData(EUSCI_B## M ##_SPI_BASE) ); \
 		} \
@@ -217,11 +217,11 @@ uint8_t DSPI::transfer(uint8_t data)
 	}
 	
 	// ensure the transmitter is ready to transmit data
-	while (!(MAP_SPI_getInterruptStatus(this->module, UCTXIFG)));
+	while (!(MAP_SPI_getInterruptStatus(this->module, EUSCI_B_IFG_TXIFG)));
 	MAP_SPI_transmitData(this->module, data);	
 	
 	// wait for a byte to be received	
-	while (!(SPI_getInterruptStatus(this->module, UCRXIFG)));
+	while (!(SPI_getInterruptStatus(this->module, EUSCI_B_IFG_RXIFG)));
 	return MAP_SPI_receiveData(this->module);
 }
 
