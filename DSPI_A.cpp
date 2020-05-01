@@ -42,6 +42,9 @@ DSPI_A::DSPI_A()
 {	//MSP432 launchpad used EUSCI_A0_SPI as default
 	this->module = EUSCI_A1_SPI_BASE;
 	DSPI_A_obj = this;
+
+	user_onTransmit = 0;
+	user_onReceive = 0;
 }
 
 /**** DESTRUCTORS Reset the module ****/
@@ -82,7 +85,7 @@ uint8_t DSPI_A::transfer(uint8_t data)
 
 	// ensure the transmitter is ready to transmit data
 	while (!(MAP_SPI_getInterruptStatus(this->module, EUSCI_A_SPI_TRANSMIT_INTERRUPT )));
-	SPI_transmitData(this->module, data);
+	MAP_SPI_transmitData(this->module, data);
 	
 	// wait for a byte to be received	
 	while (!(MAP_SPI_getInterruptStatus(this->module, EUSCI_A_SPI_RECEIVE_INTERRUPT )));
