@@ -48,7 +48,14 @@ void EUSCIB0_IRQHandler_SPI( void )
 
 void EUSCIB1_IRQHandler_SPI( void )
 {
-	IRQHANDLER(1);
+//	IRQHANDLER(1);
+    uint32_t status = MAP_SPI_getEnabledInterruptStatus( EUSCI_B1_SPI_BASE );
+//    if (status & EUSCI_B_SPI_TRANSMIT_INTERRUPT) \
+//    {
+//       MAP_SPI_transmitData( EUSCI_B1_SPI_BASE, DSPI_instancess[1]->_handleTransmit());
+//    }
+    MAP_SPI_transmitData(EUSCI_B1_BASE, DSPI_instancess[1]->_handleTransmit());
+    MAP_SPI_clearInterruptFlag(EUSCI_B1_SPI_BASE, status);
 }
 
 void EUSCIB2_IRQHandler_SPI( void )
@@ -234,6 +241,8 @@ void DSPI::onTransmit( uint8_t (*islHandle)( void ) )
 		// enable the transmit interrupt but do not clear the flag: this is done to ensure 
 		// that the interrupt fires straight away so that the transmit buffer can be filled 
 		// the first time
+	    MAP_SPI_clearInterruptFlag( this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT );
+
 		MAP_SPI_enableInterrupt( this->module, EUSCI_B_SPI_TRANSMIT_INTERRUPT );
 	}
 	else
